@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:e_commerce/app/core/theme/app_colors.dart';
+import 'package:e_commerce/app/core/utils/currency_formatter.dart';
 import 'package:e_commerce/app/routes/app_pages.dart';
 import '../controllers/detail_controller.dart';
 
@@ -25,22 +26,22 @@ class DetailView extends GetView<DetailController> {
           Obx(
             () => IconButton(
               icon: Icon(
-                controller.isFavorite.value
+                controller.isFavorite
                     ? Icons.favorite_rounded
                     : Icons.favorite_border_rounded,
-                color: controller.isFavorite.value ? AppColors.error : null,
+                color: controller.isFavorite ? AppColors.error : null,
               ),
               onPressed: () {
                 controller.toggleFavorite();
                 Get.snackbar(
-                  controller.isFavorite.value
+                  controller.isFavorite
                       ? 'Wishlist Ditambahkan'
                       : 'Wishlist Dihapus',
-                  controller.isFavorite.value
-                      ? '${product['title']} disimpan ke favorit!'
-                      : '${product['title']} dihapus dari favorit.',
+                  controller.isFavorite
+                      ? '${product.title} disimpan ke favorit!'
+                      : '${product.title} dihapus dari favorit.',
                   snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: controller.isFavorite.value
+                  backgroundColor: controller.isFavorite
                       ? AppColors.accent
                       : AppColors.darkSurfaceCard,
                   colorText: Colors.white,
@@ -75,7 +76,7 @@ class DetailView extends GetView<DetailController> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: Image.network(
-                  product['image'] as String? ?? '',
+                  product.image,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Center(
                     child: Icon(
@@ -105,7 +106,7 @@ class DetailView extends GetView<DetailController> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    product['category'] as String? ?? 'Sneakers',
+                    product.category,
                     style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 12,
@@ -122,7 +123,7 @@ class DetailView extends GetView<DetailController> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${product['rating'] ?? 4.8} / 5.0 (120+ ulasan)',
+                      '${product.rating.toStringAsFixed(1)} / 5.0 (120+ ulasan)',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -139,7 +140,7 @@ class DetailView extends GetView<DetailController> {
 
             // Nama Produk & Harga Satuan
             Text(
-              product['title'] as String? ?? 'Sneakers Premium',
+              product.title,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
@@ -151,7 +152,7 @@ class DetailView extends GetView<DetailController> {
             ),
             const SizedBox(height: 8),
             Text(
-              product['price'] as String? ?? 'Rp 0',
+              formatRupiah(product.price),
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -346,7 +347,7 @@ class DetailView extends GetView<DetailController> {
                     controller.addToCart();
                     Get.snackbar(
                       'Berhasil Ditambahkan',
-                      '${controller.quantity.value} item ${product['title']} (Size ${controller.selectedSize.value}) berhasil masuk ke keranjang!',
+                      '${controller.quantity.value} item ${product.title} (Size ${controller.selectedSize.value}) berhasil masuk ke keranjang!',
                       snackPosition: SnackPosition.BOTTOM,
                       backgroundColor: AppColors.success,
                       colorText: Colors.white,

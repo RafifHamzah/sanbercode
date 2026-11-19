@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:e_commerce/app/core/theme/app_colors.dart';
+import 'package:e_commerce/app/core/utils/currency_formatter.dart';
 import 'package:e_commerce/app/routes/app_pages.dart';
 import '../controllers/home_controller.dart';
 import 'components/product_card.dart';
@@ -91,7 +92,8 @@ class HomeView extends GetView<HomeController> {
                 right: 8,
                 top: 8,
                 child: Obx(() {
-                  if (controller.cartCount.value == 0) {
+                  final count = controller.cartItemCount;
+                  if (count == 0) {
                     return const SizedBox.shrink();
                   }
                   return Container(
@@ -105,7 +107,7 @@ class HomeView extends GetView<HomeController> {
                       minHeight: 16,
                     ),
                     child: Text(
-                      '${controller.cartCount.value}',
+                      '$count',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,
@@ -231,7 +233,6 @@ class HomeView extends GetView<HomeController> {
             // GridView Produk Katalog
             Obx(() {
               final products = controller.filteredProducts;
-              final favoriteIds = controller.favoriteIds.toSet();
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -244,21 +245,19 @@ class HomeView extends GetView<HomeController> {
                 ),
                 itemBuilder: (context, index) {
                   final product = products[index];
-                  final productId = controller.productId(product);
                   return ProductCard(
-                    title: product['title'] as String,
-                    category: product['category'] as String,
-                    price: product['price'] as String,
-                    rating: product['rating'] as double,
-                    imageUrl: product['image'] as String,
-                    isFavorite: favoriteIds.contains(productId),
-                    onToggleFavorite: () =>
-                        controller.toggleFavorite(productId),
+                    title: product.title,
+                    category: product.category,
+                    price: formatRupiah(product.price),
+                    rating: product.rating,
+                    imageUrl: product.image,
+                    isFavorite: controller.isFavorite(product),
+                    onToggleFavorite: () => controller.toggleFavorite(product),
                     onAddToCart: () {
-                      controller.addToCart();
+                      controller.cartController.addItem(product, size: 42);
                       Get.snackbar(
                         'Ditambahkan',
-                        '${product['title']} ditambahkan ke keranjang!',
+                        '${product.title} ditambahkan ke keranjang!',
                         snackPosition: SnackPosition.BOTTOM,
                         backgroundColor: AppColors.success,
                         colorText: Colors.white,
