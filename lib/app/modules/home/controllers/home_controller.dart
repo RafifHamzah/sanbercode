@@ -1,88 +1,100 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/network/result.dart';
 import '../../../data/models/product_model.dart';
+import '../../../data/repository/product_repository.dart';
 import '../../cart/controllers/cart_controller.dart';
 
 class HomeController extends GetxController {
-  final cartController = Get.find<CartController>();
+  HomeController({
+    required this.productRepository,
+    required this.cartController,
+  });
+
+  final ProductRepository productRepository;
+  final CartController cartController;
+
   final selectedCategory = 'Semua'.obs;
+  final products = <ProductModel>[].obs;
+  final isLoading = false.obs;
+  final errorMessage = RxnString();
 
-  final categories = const [
-    'Semua',
-    'Lifestyle',
-    'Running',
-    'Basketball',
-    'Skate',
-    'Casual',
-  ];
-
-  final products = const <ProductModel>[
-    ProductModel(
-      id: 'nike-air-jordan-1',
-      title: 'Nike Air Jordan 1 Retro High',
-      category: 'Basketball',
-      price: 2499000,
-      rating: 4.9,
-      image:
-          'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=500&q=80',
-    ),
-    ProductModel(
-      id: 'nike-air-force-1',
-      title: 'Nike Air Force 1 07 Triple White',
-      category: 'Lifestyle',
-      price: 1549000,
-      rating: 4.8,
-      image:
-          'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500&q=80',
-    ),
-    ProductModel(
-      id: 'adidas-ultraboost-light',
-      title: 'Adidas Ultraboost Light Running',
-      category: 'Running',
-      price: 2899000,
-      rating: 4.7,
-      image:
-          'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=500&q=80',
-    ),
-    ProductModel(
-      id: 'puma-suede-classic',
-      title: 'Puma Suede Classic XXI Black',
-      category: 'Casual',
-      price: 1099000,
-      rating: 4.6,
-      image:
-          'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=500&q=80',
-    ),
-    ProductModel(
-      id: 'new-balance-574',
-      title: 'New Balance 574 Core Grey',
-      category: 'Lifestyle',
-      price: 1499000,
-      rating: 4.8,
-      image:
-          'https://images.unsplash.com/photo-1539185441755-769473a23570?w=500&q=80',
-    ),
-    ProductModel(
-      id: 'vans-old-skool',
-      title: 'Vans Old Skool Classic Skate',
-      category: 'Skate',
-      price: 999000,
-      rating: 4.7,
-      image:
-          'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=500&q=80',
-    ),
-  ];
+  final categories = const ['Semua', 'Mens Shoes'];
 
   List<ProductModel> get filteredProducts {
     final category = selectedCategory.value;
-    if (category == 'Semua') return products;
-    return products.where((product) => product.category == category).toList();
+    if (category == 'Semua') return products.toList(growable: false);
+    return products
+        .where(
+          (product) => product.category.toLowerCase() == category.toLowerCase(),
+        )
+        .toList(growable: false);
   }
 
   int get cartItemCount => cartController.totalItemCount;
 
   bool isFavorite(ProductModel product) =>
       cartController.isFavorite(product.id);
+
+  @override
+  void onInit() {
+    super.onInit();
+    unawaited(fetchProducts(showFeedback: false));
+  }
+
+  Future<void> fetchProducts({bool showFeedback = true}) async {
+    if (isLoading.value) return;
+
+    isLoading.value = true;
+    errorMessage.value = null;
+    try {
+      final result = await productRepository.fetchProducts();
+      switch (result) {
+        case Success<List<ProductModel>, String>(data: final remoteProducts):
+          products.assignAll(remoteProducts);
+          if (showFeedback) {
+            Get.snackbar(
+              'Katalog Berhasil Diperbarui',
+              'Berhasil mengunduh ${remoteProducts.length} sepatu terbaru dari server!',
+              snackPosition: SnackPosition.BOTTOM,
+              duration: const Duration(seconds: 2),
+              backgroundColor: const Color(0xFF10B981),
+              colorText: Colors.white,
+              icon: const Icon(
+                Icons.cloud_done_rounded,
+                color: Colors.white,
+              ),
+              margin: const EdgeInsets.all(16),
+              borderRadius: 12,
+            );
+          }
+        case Failure<List<ProductModel>, String>(error: final error):
+          if (products.isEmpty) {
+            errorMessage.value = error;
+          } else if (showFeedback) {
+            Get.snackbar(
+              'Mode Offline',
+              'Koneksi ke server terputus. Menampilkan ${products.length} produk yang sudah dimuat.',
+              snackPosition: SnackPosition.BOTTOM,
+              duration: const Duration(seconds: 3),
+              backgroundColor: const Color(0xFFEF4444),
+              colorText: Colors.white,
+              icon: const Icon(
+                Icons.cloud_off_rounded,
+                color: Colors.white,
+              ),
+              margin: const EdgeInsets.all(16),
+              borderRadius: 12,
+            );
+          }
+      }
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   void selectCategory(String category) {
     selectedCategory.value = category;

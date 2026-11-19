@@ -123,11 +123,14 @@ class HomeView extends GetView<HomeController> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: RefreshIndicator(
+        onRefresh: () => controller.fetchProducts(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Search Bar Input
             TextField(
               decoration: InputDecoration(
@@ -230,6 +233,36 @@ class HomeView extends GetView<HomeController> {
             ),
             const SizedBox(height: 12),
 
+            Obx(() {
+              if (controller.isLoading.value) {
+                if (controller.products.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+                return const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: LinearProgressIndicator(),
+                );
+              }
+
+              final error = controller.errorMessage.value;
+              if (error != null) {
+                return _buildErrorCard(error, isDark);
+              }
+
+              if (controller.products.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: Text('Belum ada produk untuk ditampilkan.')),
+                );
+              }
+              return const SizedBox.shrink();
+            }),
+
             // GridView Produk Katalog
             Obx(() {
               final products = controller.filteredProducts;
@@ -274,8 +307,61 @@ class HomeView extends GetView<HomeController> {
               );
             }),
             const SizedBox(height: 24),
-          ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildErrorCard(String message, bool isDark) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurfaceCard : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        ),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.cloud_off_rounded,
+            size: 40,
+            color: AppColors.error,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Katalog gagal dimuat',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            onPressed: () => controller.fetchProducts(),
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Coba Lagi'),
+          ),
+        ],
       ),
     );
   }
