@@ -10,8 +10,6 @@ class LoginView extends GetView<LoginController> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isPasswordHidden = true.obs;
-    final rememberMe = true.obs;
 
     return Scaffold(
       appBar: AppBar(
@@ -23,7 +21,10 @@ class LoginView extends GetView<LoginController> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: Column(
+          child: Form(
+            key: controller.formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Brand Toko
@@ -70,8 +71,11 @@ class LoginView extends GetView<LoginController> {
                 ),
               ),
               const SizedBox(height: 8),
-              const TextField(
+              TextFormField(
+                controller: controller.emailController,
                 keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                validator: controller.validateEmail,
                 decoration: InputDecoration(
                   hintText: 'nama@sekolah.sch.id',
                   prefixIcon: Icon(Icons.mail_outline_rounded),
@@ -90,18 +94,22 @@ class LoginView extends GetView<LoginController> {
               ),
               const SizedBox(height: 8),
               Obx(
-                () => TextField(
-                  obscureText: isPasswordHidden.value,
+                () => TextFormField(
+                  controller: controller.passwordController,
+                  obscureText: controller.isPasswordHidden.value,
+                  textInputAction: TextInputAction.done,
+                  validator: controller.validatePassword,
+                  onFieldSubmitted: (_) => controller.submit(),
                   decoration: InputDecoration(
                     hintText: 'Minimal 6 karakter',
                     prefixIcon: const Icon(Icons.lock_outline_rounded),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        isPasswordHidden.value
+                        controller.isPasswordHidden.value
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
                       ),
-                      onPressed: () => isPasswordHidden.toggle(),
+                      onPressed: controller.isPasswordHidden.toggle,
                     ),
                   ),
                 ),
@@ -116,8 +124,9 @@ class LoginView extends GetView<LoginController> {
                     children: [
                       Obx(
                         () => Checkbox(
-                          value: rememberMe.value,
-                          onChanged: (val) => rememberMe.value = val ?? false,
+                        value: controller.rememberMe.value,
+                        onChanged: (val) =>
+                            controller.rememberMe.value = val ?? false,
                           activeColor: AppColors.primary,
                         ),
                       ),
@@ -149,20 +158,21 @@ class LoginView extends GetView<LoginController> {
               const SizedBox(height: 24),
 
               // Tombol Masuk Akun
-              ElevatedButton(
-                onPressed: () {
-                  Get.snackbar(
-                    'Berhasil Masuk',
-                    'Selamat datang kembali di KicksStore!',
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: AppColors.success,
-                    colorText: Colors.white,
-                    margin: const EdgeInsets.all(16),
-                    borderRadius: 12,
-                  );
-                  Get.offAllNamed(Routes.HOME);
-                },
-                child: const Text('Masuk ke Akun'),
+              Obx(
+                () => ElevatedButton(
+                  onPressed:
+                      controller.isLoading.value ? null : controller.submit,
+                  child: controller.isLoading.value
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Masuk ke Akun'),
+                ),
               ),
               const SizedBox(height: 28),
 
@@ -196,6 +206,7 @@ class LoginView extends GetView<LoginController> {
           ),
         ),
       ),
+    ),
     );
   }
 }
