@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:e_commerce/app/core/services/auth_service.dart';
 import 'package:e_commerce/app/core/theme/app_colors.dart';
 import 'package:e_commerce/app/core/utils/currency_formatter.dart';
 import 'package:e_commerce/app/data/local/storage_service.dart';
@@ -76,6 +77,65 @@ class HomeView extends GetView<HomeController> {
             onPressed: () async => Get.find<StorageService>().toggleTheme(),
           ),
 
+          IconButton(
+            tooltip: 'Akun',
+            icon: Obx(() {
+              final auth = Get.find<AuthService>();
+              final displayName = auth.currentUser.value?.displayName?.trim();
+              final initial = displayName == null || displayName.isEmpty
+                  ? 'U'
+                  : displayName.characters.first.toUpperCase();
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: AppColors.primary.withAlpha(25),
+                    child: auth.isLoggedIn.value
+                        ? Text(
+                            initial,
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.person_outline_rounded,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                  ),
+                  if (auth.isLoggedIn.value)
+                    Positioned(
+                      right: -1,
+                      bottom: -1,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: AppColors.success,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? AppColors.darkSurface
+                                : Colors.white,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            }),
+            onPressed: () {
+              if (Get.find<AuthService>().isLoggedIn.value) {
+                _showAccountSheet(isDark);
+              } else {
+                Get.toNamed(Routes.LOGIN);
+              }
+            },
+          ),
+
           Stack(
             alignment: Alignment.center,
             children: [
@@ -127,6 +187,62 @@ class HomeView extends GetView<HomeController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Obx(() {
+                final auth = Get.find<AuthService>();
+                if (!auth.isLoggedIn.value) return const SizedBox.shrink();
+                final displayName = auth.currentUser.value?.displayName?.trim();
+                final firstName = displayName == null || displayName.isEmpty
+                    ? 'teman'
+                    : displayName.split(RegExp(r'\s+')).first;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Halo, $firstName! 👋',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.lightTextPrimary,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withAlpha(25),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.verified_rounded,
+                              size: 14,
+                              color: AppColors.success,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Firebase Aktif',
+                              style: TextStyle(
+                                color: AppColors.success,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
               // Search Bar Input
               TextField(
                 decoration: InputDecoration(
@@ -300,6 +416,124 @@ class HomeView extends GetView<HomeController> {
               }),
               const SizedBox(height: 24),
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) {
+          switch (index) {
+            case 1:
+              Get.toNamed(Routes.WISHLIST);
+              break;
+            case 2:
+              Get.toNamed(Routes.ORDERS);
+              break;
+            case 3:
+              final auth = Get.find<AuthService>();
+              if (auth.isLoggedIn.value) {
+                _showAccountSheet(isDark);
+              } else {
+                Get.toNamed(Routes.LOGIN);
+              }
+              break;
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_rounded),
+            label: 'Beranda',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_border_rounded),
+            label: 'Wishlist',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.receipt_long_outlined),
+            label: 'Pesanan',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline_rounded),
+            label: 'Akun',
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAccountSheet(bool isDark) {
+    final auth = Get.find<AuthService>();
+    Get.bottomSheet(
+      SafeArea(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurface : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Obx(
+            () => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  auth.currentUser.value?.displayName?.isNotEmpty == true
+                      ? auth.currentUser.value!.displayName!
+                      : 'Pengguna KicksStore',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(auth.currentUserEmail.value),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.favorite_border_rounded),
+                  title: const Text('Wishlist'),
+                  onTap: () {
+                    Get.back();
+                    Get.toNamed(Routes.WISHLIST);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.receipt_long_outlined),
+                  title: const Text('Riwayat Pesanan'),
+                  onTap: () {
+                    Get.back();
+                    Get.toNamed(Routes.ORDERS);
+                  },
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () {
+                      Get.back();
+                      Get.defaultDialog(
+                        title: 'Keluar dari Akun?',
+                        middleText: 'Anda perlu login kembali untuk checkout.',
+                        textCancel: 'Batal',
+                        textConfirm: 'Keluar',
+                        confirmTextColor: Colors.white,
+                        onConfirm: () async {
+                          await auth.signOut();
+                          Get.back();
+                          Get.offAllNamed(Routes.HOME);
+                        },
+                      );
+                    },
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Keluar'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

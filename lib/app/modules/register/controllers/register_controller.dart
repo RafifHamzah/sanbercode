@@ -1,7 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/services/auth_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../login/controllers/login_controller.dart';
 
 class RegisterController extends GetxController {
   static final _emailPattern = RegExp(
@@ -62,10 +65,28 @@ class RegisterController extends GetxController {
 
     isLoading.value = true;
     try {
-      await Future<void>.delayed(const Duration(milliseconds: 600));
+      final authService = Get.find<AuthService>();
+      final registeredEmail = emailController.text.trim();
+      await authService.register(
+        name: nameController.text.trim(),
+        email: registeredEmail,
+        password: passwordController.text,
+      );
+      final returnRoute = authService.redirectRoute.value;
+      if (returnRoute != null && returnRoute.isNotEmpty) {
+        Get.offAllNamed(returnRoute);
+      } else {
+        await authService.signOut(preserveEmail: true);
+        if (Get.isRegistered<LoginController>()) {
+          Get.find<LoginController>().emailController.text = registeredEmail;
+        }
+        Get.back();
+      }
       Get.snackbar(
         'Pendaftaran Berhasil 🎉',
-        'Akunmu berhasil didaftarkan. Silakan masuk menggunakan email dan password baru.',
+        returnRoute == null
+            ? 'Akunmu berhasil didaftarkan. Silakan masuk menggunakan email dan password baru.'
+            : 'Akunmu berhasil didaftarkan. Checkout dapat dilanjutkan.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.success,
         colorText: Colors.white,
@@ -73,7 +94,16 @@ class RegisterController extends GetxController {
         borderRadius: 12,
         duration: const Duration(seconds: 3),
       );
-      Get.back();
+    } on FirebaseAuthException catch (error) {
+      final message = Get.find<AuthService>().mapFirebaseAuthError(error);
+      Get.snackbar(
+        'Pendaftaran Gagal',
+        message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.error,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
     } finally {
       isLoading.value = false;
     }

@@ -12,6 +12,8 @@ class StorageService extends GetxService {
   late final SharedPreferences _preferences;
   late ThemeMode themeMode;
 
+  SharedPreferences get prefs => _preferences;
+
   Future<StorageService> init() async {
     await Hive.initFlutter();
     if (!Hive.isAdapterRegistered(0)) {

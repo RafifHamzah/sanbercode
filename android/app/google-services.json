@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "874230170723",
+    "project_id": "kicksstore-smk-flutter-b0e61",
+    "storage_bucket": "kicksstore-smk-flutter-b0e61.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874230170723:android:6a56d96ace3cbf0a27a456",
+        "android_client_info": {
+          "package_name": "com.ecommerce.e_commerce"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBc77mhXQ2Q32i5RqN5HZ-j9AxGkdCmdzM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

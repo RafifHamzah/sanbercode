@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/services/auth_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../routes/app_pages.dart';
 
@@ -18,6 +20,19 @@ class LoginController extends GetxController {
   final isPasswordHidden = true.obs;
   final rememberMe = true.obs;
   final isLoading = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    final authService = Get.find<AuthService>();
+    emailController.text =
+        Get.find<SharedPreferences>().getString('loggedInEmail') ?? '';
+    if (authService.isLoggedIn.value) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.offAllNamed(Routes.HOME);
+      });
+    }
+  }
 
   String? validateEmail(String? value) {
     final email = value?.trim() ?? '';
@@ -40,7 +55,15 @@ class LoginController extends GetxController {
 
     isLoading.value = true;
     try {
-      await Future<void>.delayed(const Duration(milliseconds: 600));
+      final authService = Get.find<AuthService>();
+      await authService.signIn(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
+      await authService.setRememberMe(
+        rememberMe.value,
+        email: emailController.text.trim(),
+      );
       Get.snackbar(
         'Berhasil Masuk',
         'Selamat datang kembali di KicksStore!',
@@ -50,21 +73,23 @@ class LoginController extends GetxController {
         margin: const EdgeInsets.all(16),
         borderRadius: 12,
       );
-      if (rememberMe.value && Get.isRegistered<SharedPreferences>()) {
-        await Get.find<SharedPreferences>().setBool('isLoggedIn', true);
-        await Get.find<SharedPreferences>().setString(
-          'loggedInEmail',
-          emailController.text.trim(),
-        );
-      } else if (Get.isRegistered<SharedPreferences>()) {
-        await Get.find<SharedPreferences>().setBool('isLoggedIn', false);
-      }
-
-      final redirect = Get.arguments is Map
-          ? (Get.arguments as Map)['redirect']?.toString()
-          : null;
+      final redirect =
+          authService.redirectRoute.value ??
+          (Get.arguments is Map
+              ? (Get.arguments as Map)['redirect']?.toString()
+              : null);
       await Get.offAllNamed(
         redirect == Routes.CHECKOUT ? Routes.CHECKOUT : Routes.HOME,
+      );
+    } on FirebaseAuthException catch (error) {
+      final message = Get.find<AuthService>().mapFirebaseAuthError(error);
+      Get.snackbar(
+        'Login Gagal',
+        message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.error,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
       );
     } finally {
       isLoading.value = false;
