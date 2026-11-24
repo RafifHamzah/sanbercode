@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/product_model.dart';
+
 class StorageService extends GetxService {
   static const _darkThemeKey = 'isDarkTheme';
 
@@ -11,6 +13,9 @@ class StorageService extends GetxService {
 
   Future<StorageService> init() async {
     await Hive.initFlutter();
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.registerAdapter(ProductModelAdapter());
+    }
     _preferences = await SharedPreferences.getInstance();
     themeMode = _preferences.getBool(_darkThemeKey) == true
         ? ThemeMode.dark

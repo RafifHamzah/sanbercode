@@ -1,9 +1,14 @@
 import 'package:get/get.dart';
 
+import '../../../data/local/product_local_datasource.dart';
 import '../../../data/models/cart_item_model.dart';
 import '../../../data/models/product_model.dart';
 
 class CartController extends GetxController {
+  CartController({this.localDataSource});
+
+  final ProductLocalDataSource? localDataSource;
+
   static const taxRate = 0.11;
   static const shippingCost = 25000.0;
 
@@ -21,6 +26,17 @@ class CartController extends GetxController {
   double get shipping => items.isEmpty ? 0 : shippingCost;
 
   double get total => subtotal + tax + shipping;
+
+  @override
+  void onInit() {
+    super.onInit();
+    if (localDataSource != null) {
+      favoriteProducts.assignAll({
+        for (final product in localDataSource!.getWishlist())
+          product.id: product,
+      });
+    }
+  }
 
   bool isFavorite(String productId) => favoriteProducts.containsKey(productId);
 
@@ -63,12 +79,20 @@ class CartController extends GetxController {
   void toggleFavorite(ProductModel product) {
     if (favoriteProducts.containsKey(product.id)) {
       favoriteProducts.remove(product.id);
+      localDataSource?.removeFromWishlist(product.id);
     } else {
       favoriteProducts[product.id] = product;
+      localDataSource?.addToWishlist(product);
     }
   }
 
   void removeFavorite(String productId) {
     favoriteProducts.remove(productId);
+    localDataSource?.removeFromWishlist(productId);
+  }
+
+  void clearFavorites() {
+    favoriteProducts.clear();
+    localDataSource?.clearWishlist();
   }
 }

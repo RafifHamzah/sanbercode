@@ -13,6 +13,10 @@ class WishlistController extends GetxController {
     cartController.removeFavorite(product.id);
   }
 
+  void clearFavorites() {
+    cartController.clearFavorites();
+  }
+
   void addToCart(ProductModel product) {
     cartController.addItem(product, size: 42);
   }

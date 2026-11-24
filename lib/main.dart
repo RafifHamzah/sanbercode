@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'app/core/theme/app_theme.dart';
+import 'app/data/local/product_local_datasource.dart';
 import 'app/routes/app_pages.dart';
 
 Future<void> main() async {
@@ -11,6 +12,11 @@ Future<void> main() async {
     () => StorageService().init(),
     permanent: true,
   );
+  await Get.putAsync<ProductLocalDataSource>(() async {
+    final localDataSource = ProductLocalDataSourceImpl();
+    await localDataSource.init();
+    return localDataSource;
+  }, permanent: true);
   runApp(
     GetMaterialApp(
       title: "KicksStore",

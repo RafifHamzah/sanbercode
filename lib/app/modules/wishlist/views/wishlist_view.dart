@@ -21,6 +21,33 @@ class WishlistView extends GetView<WishlistController> {
         ),
         title: const Text('Wishlist Favorit'),
         actions: [
+          IconButton(
+            tooltip: 'Kosongkan wishlist',
+            icon: const Icon(Icons.delete_sweep_rounded),
+            onPressed: () {
+              if (controller.favorites.isEmpty) return;
+              Get.defaultDialog(
+                title: 'Kosongkan Wishlist?',
+                middleText:
+                    'Semua produk favorit akan dihapus dari penyimpanan lokal.',
+                textConfirm: 'Kosongkan',
+                textCancel: 'Batal',
+                confirmTextColor: Colors.white,
+                onConfirm: () {
+                  controller.clearFavorites();
+                  Get.back();
+                  Get.snackbar(
+                    'Wishlist dikosongkan',
+                    'Seluruh produk favorit telah dihapus.',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: AppColors.success,
+                    colorText: Colors.white,
+                    margin: const EdgeInsets.all(16),
+                  );
+                },
+              );
+            },
+          ),
           Container(
             margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -89,17 +116,16 @@ class WishlistView extends GetView<WishlistController> {
             final product = favorites[index];
             return InkWell(
               borderRadius: BorderRadius.circular(16),
-              onTap: () => Get.toNamed(
-                Routes.DETAIL,
-                arguments: product,
-              ),
+              onTap: () => Get.toNamed(Routes.DETAIL, arguments: product),
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.darkSurfaceCard : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    color: isDark
+                        ? AppColors.darkBorder
+                        : AppColors.lightBorder,
                   ),
                 ),
                 child: Row(
@@ -115,9 +141,8 @@ class WishlistView extends GetView<WishlistController> {
                         child: Image.network(
                           product.image,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const Icon(
-                            Icons.image_not_supported_outlined,
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.image_not_supported_outlined),
                         ),
                       ),
                     ),

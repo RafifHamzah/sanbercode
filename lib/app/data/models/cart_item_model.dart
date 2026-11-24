@@ -12,7 +12,7 @@ class CartItemModel {
   });
 
   String get id => '${product.id}-$size';
-  double get totalPrice => product.price * quantity;
+  double get totalPrice => product.price.toDouble() * quantity;
 
   CartItemModel copyWith({int? size, int? quantity}) => CartItemModel(
     product: product,
