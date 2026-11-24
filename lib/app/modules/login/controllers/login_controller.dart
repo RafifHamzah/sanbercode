@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../routes/app_pages.dart';
@@ -49,7 +50,22 @@ class LoginController extends GetxController {
         margin: const EdgeInsets.all(16),
         borderRadius: 12,
       );
-      await Get.offAllNamed(Routes.HOME);
+      if (rememberMe.value && Get.isRegistered<SharedPreferences>()) {
+        await Get.find<SharedPreferences>().setBool('isLoggedIn', true);
+        await Get.find<SharedPreferences>().setString(
+          'loggedInEmail',
+          emailController.text.trim(),
+        );
+      } else if (Get.isRegistered<SharedPreferences>()) {
+        await Get.find<SharedPreferences>().setBool('isLoggedIn', false);
+      }
+
+      final redirect = Get.arguments is Map
+          ? (Get.arguments as Map)['redirect']?.toString()
+          : null;
+      await Get.offAllNamed(
+        redirect == Routes.CHECKOUT ? Routes.CHECKOUT : Routes.HOME,
+      );
     } finally {
       isLoading.value = false;
     }

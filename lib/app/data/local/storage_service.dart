@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/cart_item_model.dart';
 import '../models/product_model.dart';
 
 class StorageService extends GetxService {
@@ -15,6 +16,9 @@ class StorageService extends GetxService {
     await Hive.initFlutter();
     if (!Hive.isAdapterRegistered(0)) {
       Hive.registerAdapter(ProductModelAdapter());
+    }
+    if (!Hive.isAdapterRegistered(1)) {
+      Hive.registerAdapter(CartItemModelAdapter());
     }
     _preferences = await SharedPreferences.getInstance();
     themeMode = _preferences.getBool(_darkThemeKey) == true

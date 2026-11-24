@@ -31,6 +31,10 @@ class CartController extends GetxController {
   void onInit() {
     super.onInit();
     if (localDataSource != null) {
+      items.assignAll(localDataSource!.getCartItems());
+      ever<List<CartItemModel>>(items, (items) {
+        localDataSource?.saveCartItems(items);
+      });
       favoriteProducts.assignAll({
         for (final product in localDataSource!.getWishlist())
           product.id: product,
@@ -49,6 +53,7 @@ class CartController extends GetxController {
       items.add(
         CartItemModel(product: product, size: size, quantity: quantity),
       );
+      localDataSource?.saveCartItems(items.toList());
       return;
     }
 
@@ -56,6 +61,7 @@ class CartController extends GetxController {
     items[index] = existingItem.copyWith(
       quantity: existingItem.quantity + quantity,
     );
+    localDataSource?.saveCartItems(items.toList());
   }
 
   void updateQuantity(CartItemModel item, int quantity) {
@@ -63,17 +69,21 @@ class CartController extends GetxController {
     if (index == -1) return;
     if (quantity <= 0) {
       items.removeAt(index);
+      localDataSource?.saveCartItems(items.toList());
       return;
     }
     items[index] = items[index].copyWith(quantity: quantity);
+    localDataSource?.saveCartItems(items.toList());
   }
 
   void removeItem(CartItemModel item) {
     items.removeWhere((cartItem) => cartItem.id == item.id);
+    localDataSource?.saveCartItems(items.toList());
   }
 
   void clearCart() {
     items.clear();
+    localDataSource?.clearCartItems();
   }
 
   void toggleFavorite(ProductModel product) {

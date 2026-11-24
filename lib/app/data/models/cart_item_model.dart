@@ -1,8 +1,16 @@
+import 'package:hive_ce/hive.dart';
+
 import 'product_model.dart';
 
+part 'cart_item_model.g.dart';
+
+@HiveType(typeId: 1)
 class CartItemModel {
+  @HiveField(0)
   final ProductModel product;
+  @HiveField(1)
   final int size;
+  @HiveField(2)
   final int quantity;
 
   const CartItemModel({
